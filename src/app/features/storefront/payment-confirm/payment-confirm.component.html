@@ -1,0 +1,79 @@
+<div class="page-container py-12">
+  <div class="max-w-lg mx-auto">
+    <div class="card p-8 text-center">
+      <!-- Icon -->
+      <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5"
+        style="background-color: var(--color-primary-100)">
+        <svg class="w-8 h-8" style="color: var(--color-primary)" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+          stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+
+      <h1 class="text-2xl font-bold text-gray-900 mb-2">Order Placed!</h1>
+      <p class="text-gray-500 mb-8">
+        To complete your purchase, please upload your bank transfer receipt below.
+        Our team will verify and approve your payment within 24 hours.
+      </p>
+
+      @if (!submitted()) {
+      <!-- File Upload -->
+      <div
+        class="border-2 border-dashed border-gray-200 rounded-xl p-8 mb-6 hover:border-purple-300 transition-colors cursor-pointer"
+        (click)="fileInput.click()" (dragover)="$event.preventDefault()" (drop)="onDrop($event)">
+        <input #fileInput type="file" accept="image/*,.pdf" class="hidden" (change)="onFileChange($event)" />
+        @if (selectedFile()) {
+        <div class="flex items-center justify-center gap-3">
+          <svg class="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div class="text-left">
+            <p class="font-semibold text-sm text-gray-900">{{ selectedFile()!.name }}</p>
+            <p class="text-xs text-gray-400">{{ (selectedFile()!.size / 1024) | number:'1.0-0' }} KB</p>
+          </div>
+        </div>
+        } @else {
+        <svg class="w-10 h-10 text-gray-300 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+          stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+        </svg>
+        <p class="text-sm text-gray-500">Click or drag & drop your receipt</p>
+        <p class="text-xs text-gray-400 mt-1">JPG, PNG, PDF up to 10MB</p>
+        }
+      </div>
+
+      @if (error()) {
+      <div class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mb-4">{{ error() }}</div>
+      }
+
+      <button (click)="submit()" class="btn-primary w-full py-3.5 text-base" [disabled]="!selectedFile() || uploading()">
+        @if (uploading()) {
+        <span class="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin"></span>
+        Uploading...
+        } @else {
+        Submit Payment Receipt
+        }
+      </button>
+
+      <a [routerLink]="['/orders', orderId()]"
+        class="block text-sm text-gray-400 hover:text-purple-700 mt-4 transition-colors">
+        I'll submit later →
+      </a>
+
+      } @else {
+      <!-- Success State -->
+      <div class="text-center">
+        <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h2 class="text-xl font-bold text-gray-900 mb-2">Receipt Uploaded!</h2>
+        <p class="text-gray-500 mb-6">We'll review and confirm your payment soon.</p>
+        <a routerLink="/orders" class="btn-primary">View My Orders</a>
+      </div>
+      }
+    </div>
+  </div>
+</div>

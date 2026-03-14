@@ -1,0 +1,104 @@
+<div class="page-container py-8">
+  <h1 class="section-title">My Cart</h1>
+
+  @if (loading()) {
+  <app-loading-spinner />
+  } @else if (!cart() || cart()!.items.length === 0) {
+  <div class="text-center py-24">
+    <div class="w-20 h-20 rounded-full bg-purple-50 flex items-center justify-center mx-auto mb-4">
+      <svg class="w-10 h-10 text-purple-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+      </svg>
+    </div>
+    <p class="text-xl font-bold text-gray-700 mb-2">Your cart is empty</p>
+    <p class="text-gray-400 mb-6">Discover products and add them to your cart</p>
+    <a routerLink="/catalog" class="btn-primary">Shop Now</a>
+  </div>
+  } @else {
+  <div class="flex flex-col lg:flex-row gap-8">
+    <!-- Cart Items -->
+    <div class="flex-1 space-y-3">
+      @for (item of cart()!.items; track item.id) {
+      <div class="card p-4 flex gap-4">
+        <!-- Image -->
+        <div class="w-20 h-20 rounded-xl overflow-hidden bg-gray-50 shrink-0">
+          @if (item.productImage) {
+          <img [src]="item.productImage" [alt]="item.productTitle" class="w-full h-full object-cover" />
+          } @else {
+          <div class="w-full h-full flex items-center justify-center text-gray-200">
+            <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16" />
+            </svg>
+          </div>
+          }
+        </div>
+        <div class="flex-1 min-w-0">
+          <h3 class="font-semibold text-gray-900 text-sm line-clamp-2">{{ item.productTitle }}</h3>
+          @if (item.techSize) {
+          <p class="text-xs text-gray-400 mt-0.5">Size: {{ item.techSize }}@if (item.wbSize) { ({{ item.wbSize }})}</p>
+          }
+          <p class="text-base font-bold mt-2" style="color: var(--color-primary)">
+            {{ (item.price * item.quantity) | currency:'RUB':'₽ ':'1.0-0' }}
+          </p>
+        </div>
+        <!-- Quantity control -->
+        <div class="flex flex-col items-end justify-between">
+          <button (click)="remove(item.id)" class="text-gray-300 hover:text-red-400 transition-colors">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <div class="flex items-center gap-1 border border-gray-200 rounded-lg overflow-hidden">
+            <button (click)="updateQty(item.id, item.quantity - 1)"
+              class="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors"
+              [disabled]="item.quantity <= 1">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4" />
+              </svg>
+            </button>
+            <span class="w-8 text-center text-sm font-medium">{{ item.quantity }}</span>
+            <button (click)="updateQty(item.id, item.quantity + 1)"
+              class="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+
+    <!-- Summary -->
+    <div class="lg:w-80 shrink-0">
+      <div class="card p-6 sticky top-20">
+        <h2 class="font-bold text-gray-900 mb-4">Order Summary</h2>
+        <div class="space-y-2 text-sm text-gray-600 mb-4">
+          <div class="flex justify-between">
+            <span>{{ cart()!.totalItems }} item(s)</span>
+            <span>{{ cart()!.totalPrice | currency:'RUB':'₽ ':'1.0-0' }}</span>
+          </div>
+          <div class="flex justify-between text-gray-400">
+            <span>Shipping</span>
+            <span>Calculated at checkout</span>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="flex justify-between items-baseline mb-5">
+          <span class="font-bold text-gray-900">Subtotal</span>
+          <span class="text-xl font-extrabold" style="color: var(--color-primary)">
+            {{ cart()!.totalPrice | currency:'RUB':'₽ ':'1.0-0' }}
+          </span>
+        </div>
+        <a routerLink="/checkout" class="btn-primary w-full text-base py-3.5">
+          Proceed to Checkout
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+          </svg>
+        </a>
+        <a routerLink="/catalog" class="btn-secondary w-full mt-3 text-sm">Continue Shopping</a>
+      </div>
+    </div>
+  </div>
+  }
+</div>

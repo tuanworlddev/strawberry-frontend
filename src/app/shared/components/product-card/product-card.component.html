@@ -1,0 +1,82 @@
+<div
+  class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200 flex flex-col h-full group translate-y-0 hover:-translate-y-1 transition-transform">
+  <!-- Image Area -->
+  <a [routerLink]="product.productUrl" class="block relative overflow-hidden bg-gray-50">
+    <div class="aspect-[3/4] w-full">
+      @if (product.thumbnailUrl) {
+      <img [src]="product.thumbnailUrl" [alt]="product.title" class="card-img w-full h-full object-cover" loading="lazy" />
+      } @else {
+      <div class="w-full h-full flex items-center justify-center">
+        <svg class="w-12 h-12 text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      </div>
+      }
+    </div>
+
+    <!-- Discount badge -->
+    @if (discountPct > 0) {
+    <span class="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-md shadow-sm">
+      -{{ discountPct }}%
+    </span>
+    }
+
+    <!-- Out of stock overlay -->
+    @if (!product.inStock) {
+    <div class="absolute inset-0 bg-white/70 flex items-center justify-center">
+      <span class="bg-gray-700 text-white text-xs font-semibold px-3 py-1 rounded-full">Out of stock</span>
+    </div>
+    }
+  </a>
+
+  <!-- Body -->
+  <div class="p-3 flex flex-col flex-1 gap-1">
+    <!-- Brand & Rating -->
+    <div class="flex justify-between items-center mb-0.5">
+      @if (product.brand) {
+      <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 truncate max-w-[60%]">{{ product.brand
+        }}</span>
+      }
+      <div class="flex items-center gap-1">
+        <span class="star-rating">★</span>
+        <span class="text-[10px] font-bold text-gray-700">{{ product.averageRating || '0.0' }}</span>
+        <span class="text-[10px] text-gray-400">({{ product.reviewCount || 0 }})</span>
+      </div>
+    </div>
+
+    <!-- Title -->
+    <a [routerLink]="product.productUrl"
+      class="text-xs font-semibold text-gray-800 line-clamp-2 leading-snug hover:text-purple-700 transition-colors flex-1 min-h-[2.4em]">
+      {{ product.title }}
+    </a>
+
+    <!-- Price -->
+    <div class="flex items-baseline gap-2 mt-1">
+      <span class="text-base font-black text-purple-700">
+        {{ product.finalPrice | currency:'RUB':'₽ ':'1.0-0' }}
+      </span>
+      @if (product.hasDiscount) { 
+        <span class="text-xs text-gray-400 line-through">
+        {{ product.originalPrice | currency:'RUB':'₽ ':'1.0-0' }}
+        </span>
+      }
+    </div>
+
+    <!-- Add to cart button (appears on hover) -->
+    @if (product.inStock) {
+    <button (click)="addToCart($event)"
+      class="add-btn mt-2 w-full py-2 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-2 shadow-sm"
+      style="background: linear-gradient(135deg, #7e22ce, #9333ea)" [disabled]="adding">
+      @if (adding) {
+      <span class="w-3 h-3 rounded-full border-2 border-white/30 border-t-white animate-spin"></span>
+      } @else {
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+      </svg>
+      Quick Add
+      }
+    </button>
+    }
+  </div>
+</div>

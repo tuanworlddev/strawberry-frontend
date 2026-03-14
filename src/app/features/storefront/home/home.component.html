@@ -1,0 +1,115 @@
+<!-- HERO BANNER -->
+<section class="relative overflow-hidden" [style.background]="slides[currentSlide].gradient" style="min-height: 280px;">
+  <div class="absolute inset-0 opacity-10 pointer-events-none hero-pattern-circles"></div>
+  <div class="absolute -top-20 -right-20 w-72 h-72 rounded-full opacity-20 blur-3xl" style="background:white"></div>
+  <div class="absolute -bottom-10 -left-10 w-48 h-48 rounded-full opacity-10 blur-2xl" style="background:white"></div>
+
+  <div class="page-container relative py-12 lg:py-16">
+    <div class="max-w-xl">
+      <span
+        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-white mb-5 transition-all">
+        {{ slides[currentSlide].tag }}
+      </span>
+      <h1 class="text-4xl lg:text-5xl font-black text-white leading-tight mb-4 transition-all">
+        {{ slides[currentSlide].title }}
+      </h1>
+      <p class="text-purple-100 text-base mb-8 leading-relaxed transition-all">
+        {{ slides[currentSlide].subtitle }}
+      </p>
+      <a routerLink="/catalog"
+        class="inline-flex items-center gap-2 px-7 py-3 rounded-xl font-black text-purple-900 bg-white hover:bg-purple-50 shadow-lg transition-all hover:-translate-y-0.5">
+        {{ slides[currentSlide].cta }}
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+        </svg>
+      </a>
+    </div>
+  </div>
+
+  <!-- Slide dots -->
+  <div class="absolute bottom-4 right-8 flex gap-2">
+    @for (s of slides; track $index) {
+    <button (click)="currentSlide = $index" class="w-2 h-2 rounded-full transition-all"
+      [ngClass]="$index === currentSlide ? 'bg-white w-5' : 'bg-white/40'">
+    </button>
+    }
+  </div>
+</section>
+
+<!-- FEATURE STRIP -->
+<div class="bg-white border-b border-gray-100 py-3 overflow-x-auto scrollbar-none">
+  <div class="page-container flex items-center justify-center gap-8 min-w-max">
+    @for (f of features; track f.label) {
+    <div class="flex items-center gap-2 text-sm text-gray-500 shrink-0">
+      <div class="w-7 h-7 rounded-full flex items-center justify-center"
+        style="background-color: var(--color-primary-100)">
+        <span class="text-base">{{ f.icon }}</span>
+      </div>
+      {{ f.label }}
+    </div>
+    }
+  </div>
+</div>
+
+<!-- CATEGORY CHIPS -->
+@if (categories().length > 0) {
+<section class="page-container py-5">
+  <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+    <button (click)="filterCategory('')"
+      class="shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-all border border-transparent"
+      [ngClass]="activeCategory() === '' ? 'bg-purple-700 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'">
+      All
+    </button>
+    @for (cat of categories(); track cat) {
+    <button (click)="filterCategory(cat)"
+      class="shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-all border border-transparent"
+      [ngClass]="activeCategory() === cat ? 'bg-purple-700 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'">
+      {{ cat }}
+    </button>
+    }
+  </div>
+</section>
+}
+
+<!-- PRODUCT GRID -->
+<section class="page-container pb-12">
+  <div class="flex items-center justify-between mb-5">
+    <h2 class="text-lg font-black text-gray-900">
+      {{ activeCategory() ? activeCategory() : 'Popular Products' }}
+      @if (totalElements() > 0) {
+      <span class="ml-2 text-sm font-normal text-gray-400">{{ totalElements() }} items</span>
+      }
+    </h2>
+    <a routerLink="/catalog" class="text-sm font-semibold text-purple-600 hover:underline">
+      See all →
+    </a>
+  </div>
+
+  @if (loading() && products().length === 0) {
+  <app-loading-spinner />
+  } @else if (products().length === 0 && !loading()) {
+  <div class="text-center py-20 text-gray-400">
+    <p class="text-lg font-medium">No products found for this category.</p>
+    <button (click)="filterCategory('')" class="text-purple-600 font-bold mt-2 hover:underline">Clear Filters</button>
+  </div>
+  } @else {
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+    @for (product of products(); track product.id) {
+    <app-product-card [product]="product" />
+    }
+  </div>
+  }
+  @if (hasMore()) {
+  <div class="text-center mt-10">
+    <button (click)="loadMore()"
+      class="px-8 py-3 rounded-xl border-2 border-purple-100 text-purple-700 font-bold hover:bg-purple-50 transition-all disabled:opacity-50"
+      [disabled]="loading()">
+      @if (loading()) {
+      <span
+        class="inline-block w-4 h-4 rounded-full border-2 border-purple-300 border-t-purple-700 animate-spin mr-2"></span>
+      }
+      Load More Products
+    </button>
+  </div>
+  }
+</section>
