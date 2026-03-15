@@ -1,59 +1,174 @@
-# Strawberry
+# Strawberry Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.2.
+## Project Overview
+`frontend/` contains the Angular frontend for the Strawberry e-commerce platform. It is the user-facing application that consumes the backend API and provides the storefront, seller workspace, and admin flows.
 
-## Development server
+The project is configured as an Angular SSR application and is packaged for both local development and containerized deployment.
 
-To start a local development server, run:
+## Tech Stack
+- Angular 21
+- TypeScript
+- Angular SSR
+- Node.js
+- npm
+- RxJS
+- Tailwind CSS v4
+- Express
+- Docker
 
-```bash
-ng serve
+## Application Areas
+- Public storefront
+  - home page, catalog, product detail, brand pages
+  - cart, checkout, orders, payment confirmation
+  - reviews and favorites
+- Seller portal
+  - seller workspace entry
+  - dashboard, products, pricing, inventory
+  - orders, payment review, shipments, sync, settings
+- Admin interface
+  - seller approval and admin operations
+
+## Project Structure
+```text
+frontend/
+├─ src/
+│  ├─ app/
+│  │  ├─ core/       Auth, API clients, services, guards, layout
+│  │  ├─ features/   Storefront, seller, and admin feature areas
+│  │  └─ shared/     Reusable UI components and shared helpers
+│  ├─ environments/  Runtime environment values
+│  ├─ server.ts      SSR Express server
+│  ├─ main.ts        Browser bootstrap
+│  └─ main.server.ts Server bootstrap
+├─ public/           Static assets copied into the build
+├─ projects/         Additional Angular application targets
+├─ Dockerfile
+├─ angular.json
+├─ package.json
+└─ proxy.conf.json
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## Prerequisites
+- Node.js 22 is recommended to match Docker and CI
+- npm
+- Backend API running locally or through Docker Compose
 
-## Code scaffolding
+You do not need Angular CLI installed globally because the project scripts use the local CLI.
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Environment Configuration
+The frontend uses [`src/environments/environment.ts`](./src/environments/environment.ts).
 
-```bash
-ng generate component component-name
+Current API configuration:
+
+```ts
+export const environment = {
+  production: false,
+  apiUrl: '/api'
+};
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+How this works:
+- In local development, `npm start` uses [`proxy.conf.json`](./proxy.conf.json) to proxy `/api` to `http://localhost:8080`
+- In the SSR runtime, [`src/server.ts`](./src/server.ts) proxies `/api` requests to the backend container or backend host
+
+If you run the frontend outside Docker, make sure the backend is reachable on `http://localhost:8080` or adjust the proxy/runtime setup accordingly.
+
+## Install and Run Locally
+From `frontend/`:
+
+Install dependencies:
 
 ```bash
-ng generate --help
+npm ci
 ```
 
-## Building
-
-To build the project run:
+Start the development server:
 
 ```bash
-ng build
+npm run start
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+Development URL:
+- `http://localhost:4200`
 
-## Running unit tests
+The app expects the backend API to be available through the local proxy.
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+## Build
+Build the production bundle:
 
 ```bash
-ng test
+npm run build
 ```
 
-## Running end-to-end tests
+The build output is written under `dist/`. This project is configured with server output for SSR builds.
 
-For end-to-end (e2e) testing, run:
+Additional useful script:
 
 ```bash
-ng e2e
+npm run watch
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+## Testing
+Run the configured frontend tests:
 
-## Additional Resources
+```bash
+npm test
+```
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+The project uses Angular's unit test builder. There is no e2e script configured in `package.json`.
+
+## API Integration
+The frontend communicates with the backend through `/api/v1/**` endpoints.
+
+Examples from the codebase:
+- Auth: `/api/v1/auth/...`
+- Public catalog: `/api/v1/public/catalog/...`
+- Customer features: `/api/v1/customer/...`
+- Seller features: `/api/v1/seller/...`
+- Admin features: `/api/v1/admin/...`
+
+Authentication is handled with Bearer tokens via the auth interceptor in [`src/app/core/interceptors/auth.interceptor.ts`](./src/app/core/interceptors/auth.interceptor.ts).
+
+## Docker Support
+The frontend includes an SSR-ready Docker image in [`Dockerfile`](./Dockerfile).
+
+Build the image from the repository root:
+
+```bash
+docker build -t strawberry-frontend ./frontend
+```
+
+Run the container:
+
+```bash
+docker run --rm -p 4200:4000 \
+  -e BACKEND_URL=http://host.docker.internal:8080 \
+  strawberry-frontend
+```
+
+Notes:
+- The container listens on port `4000`
+- `BACKEND_URL` tells the SSR server where to proxy `/api` requests
+
+For a full local setup, use Docker Compose from the repository root:
+
+```bash
+cp .env.example .env
+docker compose --env-file .env -f infra/docker/docker-compose.yml up --build
+```
+
+## Common Issues
+- **API requests fail in development**
+  Make sure the backend is running on `http://localhost:8080` so the Angular dev proxy can forward `/api` requests.
+
+- **CORS or proxy confusion**
+  In local development, the preferred path is `npm run start` with `proxy.conf.json`, not hardcoding the backend URL in the frontend.
+
+- **Node version mismatch**
+  Use Node.js 22 to stay aligned with the Docker and CI environment.
+
+- **Dependency installation errors**
+  Remove `node_modules` and reinstall with `npm ci` if your lockfile and installed packages drift.
+
+- **SSR container cannot reach the backend**
+  Set `BACKEND_URL` correctly when running the frontend container by itself.
