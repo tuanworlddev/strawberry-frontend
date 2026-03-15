@@ -63,7 +63,7 @@ Current API configuration:
 ```ts
 export const environment = {
   production: false,
-  apiUrl: '/api'
+  apiUrl: ''
 };
 ```
 
