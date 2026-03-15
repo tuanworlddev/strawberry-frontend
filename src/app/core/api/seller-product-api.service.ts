@@ -91,7 +91,7 @@ export class SellerProductApiService {
   }
 
   bulkUpdateVariantPricing(shopId: string, updates: VariantPricingBulkUpdateRequestDto): Observable<void> {
-    return this.http.post<void>(`${this.getBaseUrl(shopId)}/variants/bulk-pricing`, updates);
+    return this.http.post<void>(`${environment.apiUrl}/api/v1/seller/shops/${shopId}/variants/bulk-pricing`, updates);
   }
 
   getInventoryVariants(
