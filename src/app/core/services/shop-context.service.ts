@@ -37,7 +37,7 @@ export class ShopContextService {
     } else {
        this._currentShop.set(null);
     }
-  }, { allowSignalWrites: true });
+  });
 
   private _currentShop = signal<Shop | null>(null);
   readonly currentShop = this._currentShop.asReadonly();

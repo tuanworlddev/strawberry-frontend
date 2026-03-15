@@ -1,48 +1,54 @@
-<!-- HERO BANNER -->
-<section class="relative overflow-hidden" [style.background]="slides[currentSlide].gradient" style="min-height: 280px;">
-  <div class="absolute inset-0 opacity-10 pointer-events-none hero-pattern-circles"></div>
-  <div class="absolute -top-20 -right-20 w-72 h-72 rounded-full opacity-20 blur-3xl" style="background:white"></div>
-  <div class="absolute -bottom-10 -left-10 w-48 h-48 rounded-full opacity-10 blur-2xl" style="background:white"></div>
+<section
+  class="relative overflow-hidden"
+  [style.background]="slides[currentSlide()].gradient"
+  style="min-height: 280px;"
+>
+  <div class="pointer-events-none absolute inset-0 opacity-10 hero-pattern-circles"></div>
+  <div class="absolute -right-20 -top-20 h-72 w-72 rounded-full opacity-20 blur-3xl" style="background:white"></div>
+  <div class="absolute -bottom-10 -left-10 h-48 w-48 rounded-full opacity-10 blur-2xl" style="background:white"></div>
 
   <div class="page-container relative py-12 lg:py-16">
     <div class="max-w-xl">
-      <span
-        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-white mb-5 transition-all">
-        {{ slides[currentSlide].tag }}
+      <span class="mb-5 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-bold text-white">
+        {{ slides[currentSlide()].tag }}
       </span>
-      <h1 class="text-4xl lg:text-5xl font-black text-white leading-tight mb-4 transition-all">
-        {{ slides[currentSlide].title }}
+
+      <h1 class="mb-4 text-4xl font-black leading-tight text-white lg:text-5xl">
+        {{ slides[currentSlide()].title }}
       </h1>
-      <p class="text-purple-100 text-base mb-8 leading-relaxed transition-all">
-        {{ slides[currentSlide].subtitle }}
+
+      <p class="mb-8 text-base leading-relaxed text-purple-100">
+        {{ slides[currentSlide()].subtitle }}
       </p>
-      <a routerLink="/catalog"
-        class="inline-flex items-center gap-2 px-7 py-3 rounded-xl font-black text-purple-900 bg-white hover:bg-purple-50 shadow-lg transition-all hover:-translate-y-0.5">
-        {{ slides[currentSlide].cta }}
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+
+      <a
+        routerLink="/catalog"
+        class="inline-flex items-center gap-2 rounded-xl bg-white px-7 py-3 font-black text-purple-900 shadow-lg transition-all hover:-translate-y-0.5 hover:bg-purple-50"
+      >
+        {{ slides[currentSlide()].cta }}
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
           <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
         </svg>
       </a>
     </div>
   </div>
 
-  <!-- Slide dots -->
   <div class="absolute bottom-4 right-8 flex gap-2">
     @for (s of slides; track $index) {
-    <button (click)="currentSlide = $index" class="w-2 h-2 rounded-full transition-all"
-      [ngClass]="$index === currentSlide ? 'bg-white w-5' : 'bg-white/40'">
-    </button>
+    <button
+      (click)="currentSlide.set($index)"
+      class="h-2 rounded-full transition-all"
+      [ngClass]="$index === currentSlide() ? 'bg-white w-5' : 'bg-white/40 w-2'"
+    ></button>
     }
   </div>
 </section>
 
-<!-- FEATURE STRIP -->
-<div class="bg-white border-b border-gray-100 py-3 overflow-x-auto scrollbar-none">
-  <div class="page-container flex items-center justify-center gap-8 min-w-max">
+<div class="overflow-x-auto border-b border-gray-100 bg-white py-3 scrollbar-none">
+  <div class="page-container flex min-w-max items-center justify-center gap-8">
     @for (f of features; track f.label) {
-    <div class="flex items-center gap-2 text-sm text-gray-500 shrink-0">
-      <div class="w-7 h-7 rounded-full flex items-center justify-center"
-        style="background-color: var(--color-primary-100)">
+    <div class="flex shrink-0 items-center gap-2 text-sm text-gray-500">
+      <div class="flex h-7 w-7 items-center justify-center rounded-full" style="background-color: var(--color-primary-100)">
         <span class="text-base">{{ f.icon }}</span>
       </div>
       {{ f.label }}
@@ -51,31 +57,42 @@
   </div>
 </div>
 
-<!-- CATEGORY CHIPS -->
 @if (categories().length > 0) {
 <section class="page-container py-5">
-  <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-    <button (click)="filterCategory('')"
-      class="shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-all border border-transparent"
-      [ngClass]="activeCategory() === '' ? 'bg-purple-700 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'">
+  <div
+    #categoryStrip
+    class="flex gap-2 overflow-x-auto pb-2 scrollbar-none select-none cursor-grab active:cursor-grabbing"
+    (wheel)="onCategoryWheel($event)"
+    (pointerdown)="onCategoryPointerDown($event)"
+    (pointermove)="onCategoryPointerMove($event)"
+    (pointerup)="onCategoryPointerUp($event)"
+    (pointercancel)="onCategoryPointerUp($event)"
+  >
+    <a
+      routerLink="/catalog"
+      class="shrink-0 rounded-full border border-transparent px-4 py-1.5 text-sm font-semibold transition-all"
+      [ngClass]="activeCategoryId() === null ? 'bg-purple-700 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+    >
       All
-    </button>
-    @for (cat of categories(); track cat) {
-    <button (click)="filterCategory(cat)"
-      class="shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-all border border-transparent"
-      [ngClass]="activeCategory() === cat ? 'bg-purple-700 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'">
-      {{ cat }}
-    </button>
+    </a>
+    @for (cat of categories(); track cat.id) {
+    <a
+      routerLink="/catalog"
+      [queryParams]="{ categoryId: cat.id }"
+      class="shrink-0 rounded-full border border-transparent px-4 py-1.5 text-sm font-semibold transition-all"
+      [ngClass]="activeCategoryId() === cat.id ? 'bg-purple-700 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+    >
+      {{ cat.name }}
+    </a>
     }
   </div>
 </section>
 }
 
-<!-- PRODUCT GRID -->
 <section class="page-container pb-12">
-  <div class="flex items-center justify-between mb-5">
+  <div class="mb-5 flex items-center justify-between">
     <h2 class="text-lg font-black text-gray-900">
-      {{ activeCategory() ? activeCategory() : 'Popular Products' }}
+      {{ activeCategoryName() }}
       @if (totalElements() > 0) {
       <span class="ml-2 text-sm font-normal text-gray-400">{{ totalElements() }} items</span>
       }
@@ -88,28 +105,23 @@
   @if (loading() && products().length === 0) {
   <app-loading-spinner />
   } @else if (products().length === 0 && !loading()) {
-  <div class="text-center py-20 text-gray-400">
+  <div class="py-20 text-center text-gray-400">
     <p class="text-lg font-medium">No products found for this category.</p>
-    <button (click)="filterCategory('')" class="text-purple-600 font-bold mt-2 hover:underline">Clear Filters</button>
+    <a routerLink="/catalog" class="mt-2 inline-block font-bold text-purple-600 hover:underline">Clear Filters</a>
   </div>
   } @else {
-  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+  <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
     @for (product of products(); track product.id) {
     <app-product-card [product]="product" />
     }
   </div>
   }
-  @if (hasMore()) {
-  <div class="text-center mt-10">
-    <button (click)="loadMore()"
-      class="px-8 py-3 rounded-xl border-2 border-purple-100 text-purple-700 font-bold hover:bg-purple-50 transition-all disabled:opacity-50"
-      [disabled]="loading()">
-      @if (loading()) {
-      <span
-        class="inline-block w-4 h-4 rounded-full border-2 border-purple-300 border-t-purple-700 animate-spin mr-2"></span>
-      }
-      Load More Products
-    </button>
+
+  <div #scrollAnchor class="mt-5 h-10">
+    @if (loading() && products().length > 0) {
+    <div class="flex justify-center py-4">
+      <div class="h-8 w-8 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600"></div>
+    </div>
+    }
   </div>
-  }
 </section>

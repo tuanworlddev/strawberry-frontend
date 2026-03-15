@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ShipmentResponseDto, CreateShipmentRequestDto, ShipmentStatus } from '../models/shipping.model';
+import { ShipmentResponseDto, CreateShipmentRequestDto, ShipmentStatus, DeliveryIssueResponseDto, DeliveryIssueStatus } from '../models/shipping.model';
 
 @Injectable({ providedIn: 'root' })
 export class SellerShipmentApiService {
@@ -22,5 +22,13 @@ export class SellerShipmentApiService {
 
   getShopShipments(shopId: string): Observable<ShipmentResponseDto[]> {
     return this.http.get<ShipmentResponseDto[]>(`${this.getBaseUrl(shopId)}/shipments`);
+  }
+
+  getDeliveryIssues(shopId: string): Observable<DeliveryIssueResponseDto[]> {
+    return this.http.get<DeliveryIssueResponseDto[]>(`${this.getBaseUrl(shopId)}/delivery-issues`);
+  }
+
+  updateDeliveryIssueStatus(shopId: string, issueId: string, status: DeliveryIssueStatus): Observable<DeliveryIssueResponseDto> {
+    return this.http.put<DeliveryIssueResponseDto>(`${this.getBaseUrl(shopId)}/delivery-issues/${issueId}/status`, { status });
   }
 }

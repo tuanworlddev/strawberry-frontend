@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { CurrencyPipe } from '@angular/common';
 import { AuthService } from '../../../core/auth/auth.service';
 import { CartService } from '../../../core/services/cart.service';
+import { FavoritesService } from '../../../core/services/favorites.service';
 
 const NAV_LINKS = [
   { label: 'Home', path: '/', exact: true },
@@ -25,6 +26,7 @@ const NAV_LINKS = [
 export class NavbarComponent {
   private authService = inject(AuthService);
   private cartService = inject(CartService);
+  private favoritesService = inject(FavoritesService);
   private router = inject(Router);
 
   isLoggedIn = this.authService.isLoggedIn.bind(this.authService);
@@ -41,6 +43,8 @@ export class NavbarComponent {
 
   isSeller = computed(() => this.currentUser()?.role === 'SELLER');
   isAdmin = computed(() => this.currentUser()?.role === 'ADMIN');
+  isCustomer = computed(() => this.currentUser()?.role === 'CUSTOMER');
+  favoriteCount = this.favoritesService.favoriteCount;
 
   cart = this.cartService.cart;
   cartDrawerOpen = signal(false);
@@ -69,6 +73,10 @@ export class NavbarComponent {
 
   onMenuClick(): void {
     this.router.navigate(['/catalog']);
+  }
+
+  openFavorites(): void {
+    this.router.navigate(['/favorites']);
   }
 
   logout(): void {

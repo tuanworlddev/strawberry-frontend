@@ -32,6 +32,26 @@ export interface CreateShipmentRequestDto {
   trackingNumber?: string;
 }
 
+export type DeliveryIssueStatus = 'OPEN' | 'IN_REVIEW' | 'RESOLVED';
+
+export interface DeliveryIssueResponseDto {
+  id: string;
+  orderId: string;
+  orderNumber: string;
+  customerName: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  status: DeliveryIssueStatus;
+  customerNote?: string;
+  createdAt: string;
+  updatedAt?: string;
+  resolvedAt?: string;
+  shipmentId?: string;
+  carrier?: string;
+  trackingNumber?: string;
+  shipmentStatus?: ShipmentStatus;
+}
+
 /**
  * Mirrors backend SyncJobResponseDto.
  * Note: the backend returns syncJobId (UUID) not jobId.

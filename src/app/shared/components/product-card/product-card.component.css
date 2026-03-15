@@ -1,7 +1,9 @@
 :host {
   display: block;
 }
+
 .card-img {
+  background-color: #EFEFF4;
   transition: transform 0.4s ease;
 }
 :host:hover .card-img {
@@ -9,12 +11,6 @@
 }
 .add-btn {
   transition: opacity 0.2s, transform 0.2s;
-}
-:host .add-btn {
-  opacity: 0;
-  transform: translateY(4px);
-}
-:host:hover .add-btn {
   opacity: 1;
   transform: translateY(0);
 }

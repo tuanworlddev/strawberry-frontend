@@ -5,6 +5,7 @@ export interface ProductResponseDto {
   title: string;
   brand: string;
   mainImage: string;
+  basePrice?: number;
   minPrice: number;
   discountPrice?: number;
   inStock: boolean;
@@ -12,8 +13,19 @@ export interface ProductResponseDto {
   shopSlug: string;
   categoryId: number;
   categoryName: string;
-  wbNmId?: number;
+  wbNmId: number;
   vendorCode: string;
+  defaultVariantId?: string;
+  averageRate?: number;
+  reviewCount?: number;
+}
+
+export interface ReviewResponseDto {
+  id: string;
+  customerName: string;
+  content: string;
+  rate: number;
+  createdAt: string;
 }
 
 export interface CategoryDto {

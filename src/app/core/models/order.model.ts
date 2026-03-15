@@ -15,6 +15,28 @@ export interface OrderItem {
   variantAttributesSnapshot?: string;
   productImageSnapshot?: string;
   wbNmIdSnapshot?: number;
+  reviewId?: string;
+  reviewRate?: number;
+  reviewContent?: string;
+  reviewCreatedAt?: string;
+}
+
+export interface DeliveryIssue {
+  id: string;
+  orderId: string;
+  orderNumber: string;
+  customerName: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  status: 'OPEN' | 'IN_REVIEW' | 'RESOLVED';
+  customerNote?: string;
+  createdAt: string;
+  updatedAt?: string;
+  resolvedAt?: string;
+  shipmentId?: string;
+  carrier?: string;
+  trackingNumber?: string;
+  shipmentStatus?: string;
 }
 
 /**
@@ -37,6 +59,15 @@ export interface Order {
   customerEmail?: string;
   customerNote?: string;
   receiptImageUrl?: string;
+  payerName?: string;
+  transferAmount?: number;
+  transferTime?: string;
+  paymentSubmittedAt?: string;
+  paymentReviewedAt?: string;
+  paymentReviewNote?: string;
+  shopPaymentInstructions?: string;
+  customerCompletedAt?: string;
+  deliveryIssue?: DeliveryIssue | null;
   items: OrderItem[];
   createdAt: string;
   updatedAt?: string;
@@ -60,4 +91,16 @@ export interface Tracking {
   shipmentStatus?: string;
   shippedAt?: string;
   deliveredAt?: string;
+}
+
+export interface PaymentConfirmationUploadRequest {
+  receiptImage: File;
+  payerName: string;
+  transferAmount: number;
+  transferTime: string;
+}
+
+export interface ReviewCreateRequest {
+  rate: number;
+  content?: string;
 }

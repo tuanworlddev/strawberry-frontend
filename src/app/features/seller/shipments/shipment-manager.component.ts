@@ -5,7 +5,7 @@ import { SellerShipmentFacade } from './seller-shipment.facade';
 import { TableWrapperComponent } from '../shared/table/table-wrapper.component';
 import { BadgeComponent } from '../../../shared/ui/badge/badge';
 import { ToastService } from '../../../core/services/toast.service';
-import { ShipmentStatus } from '../../../core/models/shipping.model';
+import { DeliveryIssueStatus, ShipmentStatus } from '../../../core/models/shipping.model';
 
 @Component({
   selector: 'app-seller-shipment-manager',
@@ -101,6 +101,61 @@ import { ShipmentStatus } from '../../../core/models/shipping.model';
         </tbody>
       </app-table-wrapper>
     </div>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-lg font-bold text-gray-900">Customer Delivery Issues</h2>
+            <p class="text-sm text-gray-500">Cases where customers reported that a delivered order was not actually received.</p>
+          </div>
+          <span class="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-700">
+            {{ facade.deliveryIssues().length }} cases
+          </span>
+        </div>
+
+        @if (facade.deliveryIssues().length === 0) {
+          <div class="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-6 py-10 text-center text-sm text-gray-500">
+            No delivery issues have been reported by customers yet.
+          </div>
+        } @else {
+          <div class="space-y-3">
+            @for (issue of facade.deliveryIssues(); track issue.id) {
+              <div class="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div class="space-y-1">
+                    <p class="font-bold text-gray-900">{{ issue.orderNumber }} · {{ issue.customerName }}</p>
+                    <p class="text-sm text-gray-500">
+                      {{ issue.customerEmail || 'No email' }} · {{ issue.customerPhone || 'No phone' }}
+                    </p>
+                    <p class="text-sm text-gray-500">
+                      Reported {{ issue.createdAt | date:'medium' }}
+                    </p>
+                    <p class="text-sm text-gray-600">
+                      Shipment: {{ issue.carrier || '—' }} / {{ issue.trackingNumber || 'No tracking number' }}
+                    </p>
+                    @if (issue.customerNote) {
+                      <p class="mt-2 text-sm text-gray-700">Customer note: {{ issue.customerNote }}</p>
+                    }
+                  </div>
+
+                  <div class="flex flex-col gap-2 lg:items-end">
+                    <app-badge [variant]="getIssueVariant(issue.status)">{{ issue.status }}</app-badge>
+                    <select
+                      (change)="onUpdateIssueStatus(issue.id, $event)"
+                      [disabled]="facade.updatingIssueId() === issue.id"
+                      class="block w-full rounded-md border border-gray-200 bg-white px-2 py-1.5 text-sm"
+                    >
+                      <option value="" disabled selected>Update issue...</option>
+                      <option *ngIf="issue.status === 'OPEN'" value="IN_REVIEW">Mark In Review</option>
+                      <option *ngIf="issue.status !== 'RESOLVED'" value="RESOLVED">Mark Resolved</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
   `
 })
 export class ShipmentManagerComponent implements OnInit {
@@ -136,6 +191,11 @@ export class ShipmentManagerComponent implements OnInit {
     if (val) this.facade.updateShipmentStatus(shipmentId, val);
   }
 
+  onUpdateIssueStatus(issueId: string, event: Event) {
+    const val = (event.target as HTMLSelectElement).value as DeliveryIssueStatus;
+    if (val) this.facade.updateDeliveryIssueStatus(issueId, val);
+  }
+
   getStatusVariant(status: string) {
     switch (status) {
       case 'CREATED': return 'gray' as const;
@@ -143,6 +203,15 @@ export class ShipmentManagerComponent implements OnInit {
       case 'IN_TRANSIT': return 'purple' as const;
       case 'DELIVERED': return 'green' as const;
       case 'FAILED': return 'red' as const;
+      default: return 'gray' as const;
+    }
+  }
+
+  getIssueVariant(status: DeliveryIssueStatus) {
+    switch (status) {
+      case 'OPEN': return 'red' as const;
+      case 'IN_REVIEW': return 'yellow' as const;
+      case 'RESOLVED': return 'green' as const;
       default: return 'gray' as const;
     }
   }

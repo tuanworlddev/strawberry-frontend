@@ -78,6 +78,20 @@
         <!-- ── Right: Icon Actions ── -->
         <div class="flex items-center shrink-0">
           @if (isLoggedIn()) {
+          @if (isCustomer()) {
+          <a routerLink="/favorites" class="icon-btn relative hidden sm:flex">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+            </svg>
+            @if (favoriteCount() > 0) {
+            <span
+              class="absolute right-1 top-0 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-pink-500 px-1 text-[9px] font-black text-white shadow-sm">
+              {{ favoriteCount() > 9 ? '9+' : favoriteCount() }}
+            </span>
+            }
+            Favorites
+          </a>
+          }
           <!-- Orders -->
           <a routerLink="/orders" class="icon-btn hidden sm:flex">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

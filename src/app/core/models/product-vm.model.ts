@@ -13,11 +13,14 @@ export interface ProductCardVm {
   inStock: boolean;
   averageRating: number;
   reviewCount: number;
+  defaultVariantId?: string;
 }
 
 export interface ProductVariantVm {
   id: string;
   size: string;
+  standardSize?: string;
+  russianSize?: string;
   price: number;
   originalPrice: number;
   hasDiscount: boolean;
@@ -30,6 +33,7 @@ export interface ProductDetailVm {
   title: string;
   description: string;
   brand: string;
+  wbNmId?: number;
   categoryName: string;
   shopName: string;
   shopSlug: string;

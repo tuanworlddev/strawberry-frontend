@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { FilterSuggestions, PageResponse, ProductDetailResponseDto, ProductResponseDto } from '../models/product-dto.model';
+import { CategoryResponseDto, FilterSuggestions, PageResponse, ProductDetailResponseDto, ProductResponseDto, ReviewResponseDto } from '../models/product-dto.model';
 
 @Injectable({ providedIn: 'root' })
 export class CatalogApiService {
@@ -36,5 +36,21 @@ export class CatalogApiService {
 
   getFilters(): Observable<FilterSuggestions> {
     return this.http.get<FilterSuggestions>(`${this.base}/filters`);
+  }
+
+  getCategories(): Observable<CategoryResponseDto[]> {
+    return this.http.get<CategoryResponseDto[]>(`${this.base}/categories`);
+  }
+
+  getReviews(slug: string, page = 0, size = 10): Observable<PageResponse<ReviewResponseDto>> {
+    return this.http.get<PageResponse<ReviewResponseDto>>(`${this.base}/products/${slug}/reviews`, {
+      params: { page, size }
+    });
+  }
+
+  getRecommendations(slug: string, limit = 4): Observable<ProductResponseDto[]> {
+    return this.http.get<ProductResponseDto[]>(`${this.base}/products/${slug}/recommendations`, {
+      params: { limit }
+    });
   }
 }

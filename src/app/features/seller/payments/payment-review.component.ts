@@ -1,121 +1,431 @@
-import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
-import { SellerPaymentFacade } from './seller-payment.facade';
-import { TableWrapperComponent } from '../shared/table/table-wrapper.component';
-import { Button } from '../../../shared/ui/button/button';
-
-import { LoadingSpinnerComponent } from '../../../shared/ui/spinner/loading-spinner.component';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  HostListener,
+  OnDestroy,
+  OnInit,
+  PLATFORM_ID,
+  ViewChild,
+  inject,
+} from '@angular/core';
+import { CommonModule, CurrencyPipe, DatePipe, isPlatformBrowser, NgClass } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { SellerPaymentFacade, PaymentStatusFilter } from './seller-payment.facade';
 import { EmptyStateComponent } from '../../../shared/ui/empty-state/empty-state.component';
+import { LoadingSpinnerComponent } from '../../../shared/ui/spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-seller-payment-review',
   standalone: true,
-  imports: [CommonModule, TableWrapperComponent, LoadingSpinnerComponent, EmptyStateComponent],
+  imports: [CommonModule, FormsModule, LoadingSpinnerComponent, EmptyStateComponent, NgClass],
   providers: [CurrencyPipe, DatePipe],
   template: `
-    <div class="space-y-6">
-      <div class="flex items-center justify-between">
+    <div class="space-y-5 pb-24">
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 class="text-2xl font-black text-gray-900 tracking-tight">Payment Review</h1>
-          <p class="text-gray-500">Review proofs, approve, or reject pending customer payments.</p>
+          <h1 class="text-2xl font-black tracking-tight text-gray-900">Payment Management</h1>
+          <p class="text-sm text-gray-500">
+            Review new payment proofs first, then keep track of approved and rejected confirmations.
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-400">
+          <span class="rounded-full bg-yellow-50 px-3 py-1 text-yellow-700">Waiting first</span>
+          <span class="rounded-full bg-green-50 px-3 py-1 text-green-700">Approved after</span>
+          <span class="rounded-full bg-red-50 px-3 py-1 text-red-700">Rejected below</span>
         </div>
       </div>
 
-      <app-table-wrapper>
-        <thead>
-          <tr>
-            <th scope="col">Order & Date</th>
-            <th scope="col">Customer</th>
-            <th scope="col">Amount Due</th>
-            <th scope="col">Status</th>
-            <th scope="col" class="text-right">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          @if (facade.loading()) {
-            <tr>
-              <td colspan="5">
-                <app-loading-spinner></app-loading-spinner>
-              </td>
-            </tr>
-          } @else if (facade.pendingPayments().length === 0) {
-            <tr>
-              <td colspan="5">
-                <app-empty-state 
-                  title="All caught up!" 
-                  description="No pending payments require your review at this time.">
-                  <svg icon class="w-12 h-12 relative z-10 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </app-empty-state>
-              </td>
-            </tr>
-          } @else {
-            @for (payment of facade.pendingPayments(); track payment.orderId) {
-              <tr class="hover:bg-gray-50/50 transition-colors">
-                <td class="whitespace-nowrap">
-                   <div class="font-bold text-gray-900">#{{ payment.orderNumber }}</div>
-                   <div class="text-xs text-gray-500">{{ payment.submittedAt | date:'short' }}</div>
-                </td>
-                <td class="whitespace-nowrap">
-                   <div class="text-sm font-medium text-gray-900">{{ payment.payerName || payment.customerName || 'Guest' }}</div>
-                   @if (payment.payerName) {
-                      <div class="text-[10px] text-gray-400 uppercase tracking-tighter">Payer: {{ payment.payerName }}</div>
-                   }
-                </td>
-                <td class="whitespace-nowrap">
-                   <div class="font-bold text-gray-900">{{ payment.transferAmount | currency:'RUB':'symbol-narrow':'1.0-0' }}</div>
-                   <div class="text-[10px] text-gray-400">Total: {{ payment.orderTotal | currency:'RUB':'symbol-narrow':'1.0-0' }}</div>
-                </td>
-                <td class="whitespace-nowrap">
-                   @if (payment.receiptImageUrl) {
-                      <a [href]="payment.receiptImageUrl" target="_blank" class="block w-10 h-10 rounded border border-gray-200 overflow-hidden hover:border-purple-500 transition-colors">
-                         <img [src]="payment.receiptImageUrl" class="w-full h-full object-cover" alt="Receipt">
-                      </a>
-                   } @else {
-                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold leading-tight uppercase tracking-widest bg-yellow-100 text-yellow-800 border-yellow-200 border">
-                        {{ payment.paymentStatus }}
-                      </span>
-                   }
-                </td>
-                <td class="whitespace-nowrap text-right space-x-2">
-                   <button 
-                     [disabled]="facade.processingId() === payment.orderId"
-                     (click)="reject(payment.orderId)" 
-                     class="text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50">
-                     Reject
-                   </button>
-                   <button 
-                     [disabled]="facade.processingId() === payment.orderId"
-                     (click)="approve(payment.orderId)" 
-                     class="text-xs font-bold text-green-600 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50">
-                     Approve
-                   </button>
-                </td>
-              </tr>
+      <div class="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <div class="relative w-full max-w-xl">
+          <svg
+            class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          <input
+            [ngModel]="searchValue"
+            (ngModelChange)="onSearchChange($event)"
+            type="text"
+            placeholder="Search by customer name, email, phone, or order number"
+            class="w-full rounded-2xl border border-gray-200 bg-white py-3 pl-10 pr-4 text-sm font-medium outline-none transition-all focus:ring-2 focus:ring-amber-500"
+          />
+        </div>
+
+        <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap xl:justify-end">
+          <select
+            [ngModel]="facade.status()"
+            (ngModelChange)="onStatusChange($event)"
+            class="rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 outline-none transition-all focus:ring-2 focus:ring-amber-500"
+          >
+            <option value="ALL">All statuses</option>
+            <option value="WAITING_CONFIRMATION">Waiting Confirmation</option>
+            <option value="APPROVED">Approved</option>
+            <option value="REJECTED">Rejected</option>
+          </select>
+
+          <div class="flex flex-wrap items-center gap-2 rounded-2xl border border-gray-200 bg-white px-3 py-2.5">
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400">From</span>
+              <input
+                type="date"
+                [ngModel]="facade.fromDate()"
+                (ngModelChange)="onFromDateChange($event)"
+                class="rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-amber-500"
+              />
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400">To</span>
+              <input
+                type="date"
+                [ngModel]="facade.toDate()"
+                (ngModelChange)="onToDateChange($event)"
+                class="rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-amber-500"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      @if (facade.loading()) {
+      <div class="rounded-3xl border border-gray-200 bg-white py-24">
+        <app-loading-spinner />
+      </div>
+      } @else if (facade.payments().length === 0) {
+      <div class="rounded-3xl border border-gray-200 bg-white">
+        <app-empty-state
+          [title]="facade.emptyStateTitle()"
+          [description]="facade.emptyStateDescription()"
+        >
+          <svg icon class="relative z-10 h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z" />
+          </svg>
+        </app-empty-state>
+      </div>
+      } @else {
+      <div class="space-y-3">
+        @for (payment of facade.payments(); track payment.orderId) {
+        <article class="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
+          <div class="flex flex-col gap-3 border-b border-gray-100 bg-gray-50/70 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+            <div class="space-y-1.5">
+              <div class="flex flex-wrap items-center gap-2">
+                <h2 class="text-base font-black text-gray-900">#{{ payment.orderNumber }}</h2>
+                <span
+                  class="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em]"
+                  [ngClass]="statusClass(payment.paymentStatus)"
+                >
+                  {{ payment.paymentStatus.replace('_', ' ') }}
+                </span>
+              </div>
+              <div class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500">
+                <span>Order date: {{ payment.orderCreatedAt | date:'medium' }}</span>
+                <span>Submitted: {{ payment.submittedAt | date:'medium' }}</span>
+                @if (payment.reviewedAt) {
+                <span>Reviewed: {{ payment.reviewedAt | date:'medium' }}</span>
+                }
+              </div>
+            </div>
+
+            @if (payment.paymentStatus === 'WAITING_CONFIRMATION') {
+            <div class="flex flex-wrap gap-2 lg:justify-end">
+              <button
+                type="button"
+                [disabled]="facade.processingId() === payment.orderId"
+                (click)="reject(payment.orderId)"
+                class="rounded-xl bg-red-50 px-4 py-2 text-sm font-bold text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50"
+              >
+                Reject
+              </button>
+              <button
+                type="button"
+                [disabled]="facade.processingId() === payment.orderId"
+                (click)="approve(payment.orderId)"
+                class="rounded-xl bg-green-50 px-4 py-2 text-sm font-bold text-green-700 transition-colors hover:bg-green-100 disabled:opacity-50"
+              >
+                Approve
+              </button>
+            </div>
+            } @else {
+            <div class="rounded-2xl bg-white/90 px-3 py-2 text-xs font-semibold text-gray-500">
+              This payment has already been reviewed.
+            </div>
             }
+          </div>
+
+          <div class="grid gap-4 px-5 py-4 xl:grid-cols-[190px_minmax(0,1fr)_minmax(0,1fr)_minmax(220px,.9fr)]">
+            <div class="space-y-2">
+              <p class="text-[11px] font-black uppercase tracking-[0.18em] text-gray-400">Receipt</p>
+              @if (payment.receiptImageUrl) {
+              <button
+                type="button"
+                (click)="openReceipt(payment.receiptImageUrl, payment.orderNumber)"
+                class="group block w-full overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 text-left"
+              >
+                <img
+                  [src]="payment.receiptImageUrl"
+                  [alt]="'Receipt for order ' + payment.orderNumber"
+                  class="h-40 w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+                />
+              </button>
+              <button
+                type="button"
+                (click)="openReceipt(payment.receiptImageUrl, payment.orderNumber)"
+                class="text-xs font-bold text-amber-700 transition-colors hover:text-amber-800"
+              >
+                Open larger preview
+              </button>
+              } @else {
+              <div class="flex h-40 items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50 text-xs font-semibold text-gray-400">
+                No receipt image
+              </div>
+              }
+            </div>
+
+            <div class="space-y-2">
+              <p class="text-[11px] font-black uppercase tracking-[0.18em] text-gray-400">Customer</p>
+              <div class="rounded-2xl bg-gray-50 px-4 py-3 text-sm text-gray-700">
+                <p class="font-semibold text-gray-900">{{ payment.customerName || 'Guest' }}</p>
+                <p class="mt-1 break-all">{{ payment.customerEmail || 'No email provided' }}</p>
+                <p class="mt-1">{{ payment.customerPhone || 'No phone provided' }}</p>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <p class="text-[11px] font-black uppercase tracking-[0.18em] text-gray-400">Payment</p>
+              <div class="rounded-2xl bg-gray-50 px-4 py-3">
+                <div class="grid gap-2 text-sm text-gray-700">
+                  <div class="flex items-start justify-between gap-4">
+                    <span>Amount due</span>
+                    <span class="text-right font-bold text-gray-900">{{ payment.orderTotal | currency:'RUB':'symbol-narrow':'1.0-0' }}</span>
+                  </div>
+                  <div class="flex items-start justify-between gap-4">
+                    <span>Transferred</span>
+                    <span class="text-right font-bold text-gray-900">{{ payment.transferAmount | currency:'RUB':'symbol-narrow':'1.0-0' }}</span>
+                  </div>
+                  <div class="flex items-start justify-between gap-4">
+                    <span>Payer name</span>
+                    <span class="text-right font-medium text-gray-900">{{ payment.payerName || 'Not provided' }}</span>
+                  </div>
+                  @if (payment.transferTime) {
+                  <div class="flex items-start justify-between gap-4">
+                    <span>Transfer time</span>
+                    <span class="text-right font-medium text-gray-900">{{ payment.transferTime | date:'medium' }}</span>
+                  </div>
+                  }
+                  <div class="flex items-start justify-between gap-4">
+                    <span>Submitted</span>
+                    <span class="text-right font-medium text-gray-900">{{ payment.submittedAt | date:'medium' }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <p class="text-[11px] font-black uppercase tracking-[0.18em] text-gray-400">Review</p>
+              <div class="rounded-2xl bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                <p class="leading-6">
+                  {{
+                    payment.reviewNote ||
+                    (payment.paymentStatus === 'WAITING_CONFIRMATION'
+                      ? 'Waiting for seller review.'
+                      : 'No review note was recorded.')
+                  }}
+                </p>
+              </div>
+
+              @if (payment.paymentStatus !== 'WAITING_CONFIRMATION') {
+              <div class="rounded-2xl border border-gray-200 bg-white px-4 py-3 text-xs font-semibold text-gray-500">
+                Read-only record. No further payment action is available.
+              </div>
+              }
+            </div>
+          </div>
+        </article>
+        }
+
+        <div #sentinel class="flex h-12 items-center justify-center">
+          @if (facade.loadingMore()) {
+          <div class="flex items-center gap-2 text-gray-400">
+            <span class="h-4 w-4 rounded-full border-2 border-gray-200 border-t-amber-500 animate-spin"></span>
+            <span class="text-[10px] font-bold uppercase tracking-widest">Loading more</span>
+          </div>
+          } @else if (!facade.hasMore()) {
+          <span class="text-[10px] font-bold uppercase tracking-widest text-gray-300">End of results</span>
           }
-        </tbody>
-      </app-table-wrapper>
+        </div>
+      </div>
+      }
+
+      @if (receiptPreviewUrl) {
+      <div
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+        (click)="closeReceipt()"
+      >
+        <div
+          class="relative max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-3xl bg-white shadow-2xl"
+          (click)="$event.stopPropagation()"
+        >
+          <button
+            type="button"
+            (click)="closeReceipt()"
+            class="absolute right-4 top-4 z-10 rounded-full bg-black/70 p-2 text-white transition-colors hover:bg-black"
+            aria-label="Close receipt preview"
+          >
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <div class="border-b border-gray-100 px-5 py-4">
+            <p class="text-sm font-black uppercase tracking-[0.18em] text-gray-400">Receipt Preview</p>
+            <p class="mt-1 text-lg font-bold text-gray-900">Order #{{ receiptPreviewLabel }}</p>
+          </div>
+          <div class="bg-gray-50 p-4">
+            <img
+              [src]="receiptPreviewUrl"
+              [alt]="'Receipt preview for order ' + receiptPreviewLabel"
+              class="max-h-[72vh] w-full rounded-2xl object-contain"
+            />
+          </div>
+        </div>
+      </div>
+      }
     </div>
-  `
+  `,
+  styles: [`
+    :host {
+      display: block;
+    }
+    .animate-spin {
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  `],
 })
-export class PaymentReviewComponent implements OnInit {
+export class PaymentReviewComponent implements OnInit, AfterViewInit, OnDestroy {
   facade = inject(SellerPaymentFacade);
+  private platformId = inject(PLATFORM_ID);
+
+  @ViewChild('sentinel')
+  set sentinelRef(value: ElementRef<HTMLElement> | undefined) {
+    this.sentinel = value;
+    if (value) {
+      queueMicrotask(() => this.setupInfiniteScroll());
+    }
+  }
+
+  searchValue = '';
+  receiptPreviewUrl: string | null = null;
+  receiptPreviewLabel = '';
+  private observer?: IntersectionObserver;
+  private searchDebounce?: ReturnType<typeof setTimeout>;
+  private sentinel?: ElementRef<HTMLElement>;
+
+  private get isBrowser(): boolean {
+    return isPlatformBrowser(this.platformId);
+  }
 
   ngOnInit() {
-    this.facade.loadPendingPayments();
+    this.searchValue = this.facade.search();
+    this.facade.initialize();
+  }
+
+  ngAfterViewInit(): void {
+    if (!this.isBrowser) return;
+    queueMicrotask(() => this.setupInfiniteScroll());
+  }
+
+  ngOnDestroy(): void {
+    this.observer?.disconnect();
+    if (this.searchDebounce) clearTimeout(this.searchDebounce);
+  }
+
+  onSearchChange(value: string) {
+    this.searchValue = value;
+    if (this.searchDebounce) clearTimeout(this.searchDebounce);
+    this.searchDebounce = setTimeout(() => this.facade.setSearch(value), 300);
+  }
+
+  onStatusChange(value: PaymentStatusFilter) {
+    this.facade.setStatus(value);
+  }
+
+  onFromDateChange(value: string) {
+    this.facade.setDateRange(value, this.facade.toDate());
+  }
+
+  onToDateChange(value: string) {
+    this.facade.setDateRange(this.facade.fromDate(), value);
   }
 
   approve(orderId: string) {
-    if (confirm('Are you sure you want to approve this payment? The order will proceed to fulfillment.')) {
+    if (confirm('Approve this payment and make the order eligible for fulfillment?')) {
       this.facade.approve(orderId);
     }
   }
 
   reject(orderId: string) {
-    if (confirm('Are you sure you want to reject this payment? The customer will be requested to pay again.')) {
-      this.facade.reject(orderId);
+    const reason = prompt('Reason for rejection (optional). This will be visible to the customer.');
+    if (reason === null) return;
+    if (confirm('Reject this payment proof and ask the customer to submit a new one?')) {
+      this.facade.reject(orderId, reason || undefined);
+    }
+  }
+
+  openReceipt(url: string, orderNumber: string) {
+    this.receiptPreviewUrl = url;
+    this.receiptPreviewLabel = orderNumber;
+  }
+
+  closeReceipt() {
+    this.receiptPreviewUrl = null;
+    this.receiptPreviewLabel = '';
+  }
+
+  statusClass(status: string): string {
+    switch (status) {
+      case 'WAITING_CONFIRMATION':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'APPROVED':
+        return 'bg-green-100 text-green-800';
+      case 'REJECTED':
+        return 'bg-red-100 text-red-800';
+      case 'REFUNDED':
+        return 'bg-slate-100 text-slate-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
+    }
+  }
+
+  private setupInfiniteScroll(): void {
+    if (!this.isBrowser) return;
+    if (typeof IntersectionObserver === 'undefined') return;
+    if (!this.sentinel?.nativeElement) return;
+
+    this.observer?.disconnect();
+    this.observer = new IntersectionObserver((entries) => {
+      const entry = entries[0];
+      if (!entry?.isIntersecting) return;
+      this.facade.loadNextPage();
+    }, { rootMargin: '240px 0px' });
+
+    this.observer.observe(this.sentinel.nativeElement);
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    if (this.receiptPreviewUrl) {
+      this.closeReceipt();
     }
   }
 }

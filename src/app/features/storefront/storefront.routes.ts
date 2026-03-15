@@ -15,6 +15,15 @@ export const STOREFRONT_ROUTES: Routes = [
     loadComponent: () => import('./product-detail/product-detail.component').then(m => m.ProductDetailComponent),
   },
   {
+    path: 'brands/:brandName',
+    loadComponent: () => import('./brand/brand.component').then(m => m.BrandComponent),
+  },
+  {
+    path: 'favorites',
+    loadComponent: () => import('./favorites/favorites.component').then(m => m.FavoritesComponent),
+    canActivate: [authGuard],
+  },
+  {
     path: 'cart',
     loadComponent: () => import('./cart/cart.component').then(m => m.CartComponent),
     canActivate: [authGuard],

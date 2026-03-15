@@ -14,9 +14,18 @@ import { LoadingSpinnerComponent } from '../../../shared/ui/spinner/loading-spin
 export class CartComponent implements OnInit {
   private cartService = inject(CartService);
   private toast = inject(ToastService);
+  private router = inject(Router);
 
   cart = this.cartService.cart;
   loading = signal(true);
+
+  availableItemCount(): number {
+    return this.cart()?.items.filter(item => item.isAvailable).reduce((sum, item) => sum + item.quantity, 0) ?? 0;
+  }
+
+  unavailableItemCount(): number {
+    return this.cart()?.items.filter(item => !item.isAvailable).length ?? 0;
+  }
 
   formatAttrs(attrs: Record<string, string>) {
     return Object.values(attrs).join(' / ');
@@ -38,5 +47,19 @@ export class CartComponent implements OnInit {
       next: () => this.toast.success('Item removed'),
       error: (err) => this.toast.error(err?.error?.message ?? 'Failed to remove')
     });
+  }
+
+  canProceedToCheckout(): boolean {
+    const cart = this.cart();
+    return !!cart && cart.items.length > 0 && cart.items.every(item => item.isAvailable);
+  }
+
+  proceedToCheckout(): void {
+    if (!this.canProceedToCheckout()) {
+      this.toast.error('Please remove unavailable items before proceeding to checkout.');
+      return;
+    }
+
+    this.router.navigate(['/checkout']);
   }
 }
