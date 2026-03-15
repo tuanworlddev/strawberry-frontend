@@ -6,23 +6,72 @@ import {
 } from '@angular/ssr/node';
 import express from 'express';
 import { join } from 'node:path';
+import { Readable } from 'node:stream';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
+const apiTarget = process.env['BACKEND_URL'] || 'http://localhost:8080';
 
 const app = express();
 const angularApp = new AngularNodeAppEngine();
 
 /**
- * Example Express Rest API endpoints can be defined here.
- * Uncomment and define endpoints as necessary.
- *
- * Example:
- * ```ts
- * app.get('/api/{*splat}', (req, res) => {
- *   // Handle API request
- * });
- * ```
+ * Runtime health endpoint for container orchestration.
  */
+app.get('/health', (_req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
+/**
+ * Proxy API requests to the Spring Boot backend so the browser can use a stable same-origin /api contract.
+ */
+app.use('/api', async (req, res) => {
+  const targetUrl = `${apiTarget}${req.originalUrl}`;
+  const headers = new Headers();
+
+  for (const [key, value] of Object.entries(req.headers)) {
+    if (value === undefined || key.toLowerCase() === 'host') {
+      continue;
+    }
+
+    if (Array.isArray(value)) {
+      value.forEach((entry) => headers.append(key, entry));
+    } else {
+      headers.set(key, value);
+    }
+  }
+
+  const init: RequestInit & { duplex?: 'half' } = {
+    method: req.method,
+    headers,
+  };
+
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    init.body = Readable.toWeb(req) as BodyInit;
+    init.duplex = 'half';
+  }
+
+  try {
+    const response = await fetch(targetUrl, init);
+
+    res.status(response.status);
+    response.headers.forEach((value, key) => {
+      if (key.toLowerCase() === 'transfer-encoding') {
+        return;
+      }
+      res.setHeader(key, value);
+    });
+
+    if (!response.body) {
+      res.end();
+      return;
+    }
+
+    Readable.fromWeb(response.body as any).pipe(res);
+  } catch (error) {
+    console.error('API proxy error', error);
+    res.status(502).json({ message: 'Backend API is unavailable' });
+  }
+});
 
 /**
  * Serve static files from /browser
