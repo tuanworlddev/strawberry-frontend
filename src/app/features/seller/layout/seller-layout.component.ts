@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ShopService, Shop } from '../../../core/services/shop.service';
 import { ShopContextService } from '../../../core/services/shop-context.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-seller-layout',
@@ -15,6 +16,7 @@ export class SellerLayoutComponent implements OnInit {
   private authService = inject(AuthService);
   private shopService = inject(ShopService);
   private contextService = inject(ShopContextService);
+  private toastService = inject(ToastService);
 
   shop = this.contextService.currentShop;
   shopId = this.contextService.currentShopId;
@@ -31,7 +33,10 @@ export class SellerLayoutComponent implements OnInit {
 
   switchShop(id: string) {
     this.switcherOpen.set(false);
-    this.contextService.navigateToShop(id, 'dashboard');
+    this.shopService.activateShop(id).subscribe({
+      next: () => this.contextService.navigateToShop(id, 'dashboard'),
+      error: (err) => this.toastService.error(err.error?.message || 'Failed to switch shop'),
+    });
   }
 
   logout() {

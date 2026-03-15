@@ -19,14 +19,25 @@ export interface Shop {
   paymentInstructions?: string;
   productCount?: number;
   orderCount?: number;
-  status: 'ACTIVE' | 'INACTIVE' | 'DRAFT';
+  newOrderCount?: number;
+  deliveredOrderCount?: number;
+  status: 'ACTIVE' | 'SUSPENDED' | 'DRAFT';
   createdAt?: string;
+}
+
+export interface SellerWorkspace {
+  approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
+  reviewNote?: string;
+  hasShops: boolean;
+  shopCount: number;
+  currentShop?: Shop | null;
 }
 
 @Injectable({ providedIn: 'root' })
 export class ShopService {
   private http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/api/v1/seller/shops`;
+  private readonly workspaceUrl = `${environment.apiUrl}/api/v1/seller/workspace`;
 
   getSellerShops(): Observable<Shop[]> {
     return this.http.get<Shop[]>(this.baseUrl);
@@ -42,5 +53,13 @@ export class ShopService {
 
   updateShop(shopId: string, data: Partial<Shop>): Observable<Shop> {
     return this.http.put<Shop>(`${this.baseUrl}/${shopId}`, data);
+  }
+
+  getSellerWorkspace(): Observable<SellerWorkspace> {
+    return this.http.get<SellerWorkspace>(this.workspaceUrl);
+  }
+
+  activateShop(shopId: string): Observable<SellerWorkspace> {
+    return this.http.post<SellerWorkspace>(`${this.workspaceUrl}/shops/${shopId}/activate`, {});
   }
 }

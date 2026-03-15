@@ -26,12 +26,6 @@
         <a [routerLink]="['/seller/shops', shopId(), 'sync']" (click)="sidebarOpen.set(false)" routerLinkActive="bg-gray-800 text-white" class="flex items-center px-4 py-3 rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white transition-colors font-medium">Sync Metrics</a>
         <a [routerLink]="['/seller/shops', shopId(), 'settings']" (click)="sidebarOpen.set(false)" routerLinkActive="bg-gray-800 text-white" class="flex items-center px-4 py-3 rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white transition-colors font-medium">Settings</a>
       }
-      <div class="pt-4 mt-4 border-t border-gray-800">
-         <a routerLink="/seller/shops" class="flex items-center px-4 py-2 text-sm text-gray-500 hover:text-white transition-colors">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
-            Manage All Shops
-         </a>
-      </div>
     </nav>
     <div class="p-4 border-t border-gray-800">
        <button (click)="logout()" class="w-full flex items-center justify-center px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-xl text-sm font-bold text-gray-300 transition-colors">Logout</button>
@@ -55,7 +49,6 @@
                     class="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200">
                <div class="text-right hidden sm:block">
                   <p class="text-sm font-bold text-gray-900 leading-tight">{{ shop()?.name || 'Loading...' }}</p>
-                  <p class="text-[10px] text-gray-500 uppercase tracking-tighter">{{ shop()?.slug || '' }}</p>
                </div>
                <svg class="w-4 h-4 text-gray-400 transition-transform" [class.rotate-180]="switcherOpen()" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
@@ -76,7 +69,6 @@
                           </div>
                           <div class="flex-1 min-w-0">
                              <p class="text-sm font-semibold text-gray-900 truncate">{{ s.name }}</p>
-                             <p class="text-xs text-gray-500 truncate">{{ s.slug }}.strawberry.com</p>
                           </div>
                           @if (s.id === shopId()) {
                              <svg class="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>

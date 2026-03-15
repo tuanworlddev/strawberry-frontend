@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -13,7 +13,7 @@ import { ToastService } from '../../../core/services/toast.service';
     <div class="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
       <div class="max-w-md md:max-w-xl lg:max-w-4xl mx-auto">
         <div class="mb-8 flex items-center">
-          <a routerLink="/seller/shops" class="mr-4 text-slate-400 hover:text-slate-600">
+          <a routerLink="/seller" class="mr-4 text-slate-400 hover:text-slate-600">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 stroke-linecap="round"
@@ -226,7 +226,7 @@ import { ToastService } from '../../../core/services/toast.service';
     </div>
   `,
 })
-export class CreateShopComponent {
+export class CreateShopComponent implements OnInit {
   private fb = inject(FormBuilder);
   private shopService = inject(ShopService);
   private router = inject(Router);
@@ -246,6 +246,21 @@ export class CreateShopComponent {
     correspondentAccount: [''],
     paymentInstructions: [''],
   });
+
+  ngOnInit() {
+    this.shopService.getSellerWorkspace().subscribe({
+      next: (workspace) => {
+        if (workspace.approvalStatus !== 'APPROVED') {
+          this.router.navigate(['/seller']);
+          return;
+        }
+
+        if (workspace.currentShop?.id) {
+          this.router.navigate(['/seller/shops', workspace.currentShop.id, 'dashboard']);
+        }
+      },
+    });
+  }
 
   onSubmit() {
     if (this.shopForm.valid) {

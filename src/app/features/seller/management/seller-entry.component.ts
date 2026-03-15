@@ -1,35 +1,48 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ShopService } from '../../../core/services/shop.service';
+import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-seller-entry',
   standalone: true,
-  template: `
-    <div class="flex items-center justify-center min-h-screen bg-slate-50">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-    </div>
-  `
+  imports: [CommonModule],
+  templateUrl: './seller-entry.component.html',
+  styleUrl: './seller-entry.component.css',
 })
 export class SellerEntryComponent implements OnInit {
   private shopService = inject(ShopService);
   private router = inject(Router);
+  private authService = inject(AuthService);
+
+  isLoading = signal(true);
+  approvalStatus = signal<'PENDING' | 'APPROVED' | 'REJECTED' | null>(null);
+  reviewNote = signal('');
+  shopCount = signal(0);
+  sellerName = computed(() => this.authService.currentUser()?.fullName || 'Seller');
 
   ngOnInit() {
-    this.shopService.getSellerShops().subscribe({
-      next: (shops) => {
-        if (shops.length === 0) {
-          this.router.navigate(['/seller/shops/create']);
-        } else if (shops.length === 1) {
-          this.router.navigate(['/seller/shops', shops[0].id, 'dashboard']);
-        } else {
-          this.router.navigate(['/seller/shops']);
+    this.shopService.getSellerWorkspace().subscribe({
+      next: (workspace) => {
+        this.approvalStatus.set(workspace.approvalStatus);
+        this.reviewNote.set(workspace.reviewNote || '');
+        this.shopCount.set(workspace.shopCount || 0);
+
+        if (workspace.approvalStatus === 'APPROVED' && workspace.currentShop?.id) {
+          this.router.navigate(['/seller/shops', workspace.currentShop.id, 'dashboard']);
+          return;
         }
+
+        this.isLoading.set(false);
       },
       error: () => {
-        // Fallback to shops list or login
-        this.router.navigate(['/seller/shops']);
-      }
+        this.isLoading.set(false);
+      },
     });
+  }
+
+  createShop() {
+    this.router.navigate(['/seller/shops/create']);
   }
 }

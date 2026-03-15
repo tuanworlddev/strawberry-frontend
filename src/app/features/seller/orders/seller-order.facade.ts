@@ -45,9 +45,16 @@ export class SellerOrderFacade {
     ).subscribe({
       next: (updatedOrder) => {
         this.toast.success(`Order ${updatedOrder.orderNumber} status updated to ${newStatus}`);
-        this.orders.update(orders => 
-          orders.map(o => o.id === orderId ? updatedOrder : o)
-        );
+        this.orders.update((orders) => {
+          const activeFilter = this.filterStatus();
+          const shouldRemainVisible = !activeFilter || updatedOrder.status === activeFilter;
+
+          if (!shouldRemainVisible) {
+            return orders.filter((order) => order.id !== orderId);
+          }
+
+          return orders.map((order) => (order.id === orderId ? updatedOrder : order));
+        });
       },
       error: () => this.toast.error('Failed to update order status')
     });

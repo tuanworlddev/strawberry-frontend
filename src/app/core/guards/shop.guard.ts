@@ -14,7 +14,7 @@ export const shopGuard: CanActivateFn = (
   const shopId = route.paramMap.get('shopId');
 
   if (!shopId) {
-    router.navigate(['/seller/shops']);
+    router.navigate(['/seller']);
     return of(false);
   }
 
@@ -22,7 +22,7 @@ export const shopGuard: CanActivateFn = (
     map(() => true),
     catchError((err) => {
       toastService.error(err.error?.message || 'Access denied or shop invalid');
-      router.navigate(['/seller/shops']);
+      router.navigate(['/seller']);
       return of(false);
     })
   );

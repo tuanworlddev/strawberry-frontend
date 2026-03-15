@@ -58,7 +58,7 @@ export class ShopContextService {
       catchError((err) => {
         this._isLoading.set(false);
         this.toastService.error(err.error?.message || 'Access denied or shop not found');
-        this.router.navigate(['/seller/shops']);
+        this.router.navigate(['/seller']);
         return of(null);
       })
     ).subscribe(shop => {

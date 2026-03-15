@@ -15,7 +15,7 @@ export const SELLER_ROUTES: Routes = [
     children: [
       {
         path: '',
-        loadComponent: () => import('./management/shop-list.component').then(m => m.ShopListComponent)
+        component: SellerEntryComponent
       },
       {
         path: 'create',
